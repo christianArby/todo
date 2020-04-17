@@ -15,14 +15,11 @@ import {
 export default class App extends Component {
 
     state = {
-        list: '',
         userInput: '',
         dict: [],
     }
 
     addToDo = (newTodo) => {
-        this.setState({ list: this.state.list.concat(this.state.userInput) })
-
         let copyDict = this.state.dict;
         copyDict[this.state.userInput] = false;
 
@@ -92,11 +89,8 @@ export default class App extends Component {
                     </TouchableNativeFeedback>
 
                 </View>
-
             );
         }
-
-
     };
 
     render() {
@@ -107,7 +101,6 @@ export default class App extends Component {
                         renderItem={this.renderItem}
                         data={_.keys(this.state.dict)}
                         keyExtractor={item => `${item}`}
-
                     />
                 </View>
 
@@ -116,7 +109,6 @@ export default class App extends Component {
                     ref={input => { this.textInput = input }}
                 />
 
-
                 <Button
                     onPress={() => {
                         this.addToDo();
@@ -124,20 +116,7 @@ export default class App extends Component {
                     }}
                     title="Add todo"
                 />
-
             </View>
         );
     }
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        paddingTop: 22
-    },
-    item: {
-        padding: 10,
-        fontSize: 10,
-        height: 44,
-    },
-})
