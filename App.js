@@ -31,11 +31,14 @@ export default class App extends Component {
         this.setState({ fabVisible: boolean })
     }
 
-    checkIfDateHeader = (item) => {
-        if (Object.keys(this.state.dict).length > 0) {
+    checkIfDateHeader = (index) => {
+        if (index > 0) {
 
-            let moment1 = new moment(new Date(this.state.dict[item].ts));
-            let moment2 = new moment(new Date(this.state.dict['0'].ts));
+            var key = Object.keys(this.state.dict)[index];
+            var prevKey = Object.keys(this.state.dict)[index - 1];
+
+            let moment1 = new moment(new Date(this.state.dict[key].ts));
+            let moment2 = new moment(new Date(this.state.dict[prevKey].ts));
 
             if (moment1.isSame(moment2, 'day') && moment1.isSame(moment2, 'date')) {
                 return false;
@@ -56,7 +59,7 @@ export default class App extends Component {
         let copyDict = this.state.dict;
         var today = Math.round((new Date()).getTime());
         copyDict[this.state.userInput] = { completed: false, ts: today, text: this.state.userInput }
-        this.setState({ dict: copyDict});
+        this.setState({ dict: copyDict });
     }
 
     handleKeyDown = () => {
@@ -71,7 +74,7 @@ export default class App extends Component {
 
         let momentDate = new moment(new Date(timestamp));
         // Will display time in 10:30:23 format
-        let formattedDate = momentDate.format("MMMM D, YYYY");
+        let formattedDate = momentDate.format("dddd D MMMM YYYY");
         return (formattedDate);
     }
 
@@ -255,18 +258,26 @@ export default class App extends Component {
 
     }
 
-    renderItem = ({ item }) => {
+    renderItem = ({ item, index }) => {
 
-   
-       
+        var key = Object.keys(this.state.dict)[index];
 
-        
+        console.log('item: ' + item + ' index: ' + index + ' from dict: ' + this.state.dict[key].ts);
+
+        const getDateHeader = this.checkIfDateHeader(index) && (
+            <Text style={{ fontSize: 16, padding: 20, color: 'gray' }}>
+                {this.getDate(this.state.dict[item].ts)}
+            </Text>
+
+        )
 
         if (this.state.dict[item].completed) {
             return (
                 <View style={{ flex: 1 }}>
 
-                
+                    {getDateHeader}
+
+
 
                     <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
 
@@ -299,7 +310,9 @@ export default class App extends Component {
             return (
                 <View style={{ flex: 1 }}>
 
-                   
+                    {getDateHeader}
+
+
 
                     <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
 
@@ -335,12 +348,14 @@ export default class App extends Component {
 }
 
 function FirstPage() {
+    const momentDate = new moment(new Date());
+    const formattedDate = momentDate.format("dddd D MMMM YYYY");
     return (
         <View style={{ flex: 1 }}>
             <View style={{ flex: 1, backgroundColor: 'white', justifyContent: 'center', alignItems: 'center' }}>
                 <TodoLogo />
                 <Text style={{ fontSize: 16, marginTop: 8, color: 'gray' }}>
-                    {'Monday 25 Sep 2017'}
+                    {formattedDate}
                 </Text>
 
             </View>
