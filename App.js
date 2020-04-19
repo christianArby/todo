@@ -11,12 +11,14 @@ import {
     FlatList,
     TouchableNativeFeedback,
     TouchableOpacity,
-    StyleSheet
+    StyleSheet,
+    ActivityIndicator
 } from 'react-native';
 
 import { Icon } from 'react-native-elements'
 
 export default class App extends Component {
+
 
     state = {
         userInput: '',
@@ -25,6 +27,22 @@ export default class App extends Component {
         addItemExplanationVisible: true,
         isLoading: true,
         fabVisible: true
+    }
+
+    componentDidMount() {
+        fetch('https://us-central1-foxmike-test.cloudfunctions.net/todoDb/getTodo', { method: 'GET' })
+            .then((response) => response.json())
+            .then((json) => {
+                if (json === null) {
+                    this.setState({ dict: [], isLoading: false });
+                } else {
+                    this.setState({ dict: json, isLoading: false });
+                }
+            })
+            .catch((error) => console.error(error))
+            .finally(() => {
+                this.setState({ isLoading: false });
+            });
     }
 
     toggleFab = (boolean) => {
@@ -58,9 +76,27 @@ export default class App extends Component {
     addToDo = (newTodo) => {
         let copyDict = this.state.dict;
         var today = Math.round((new Date()).getTime());
-        copyDict[this.state.userInput] = { completed: false, ts: today, text: this.state.userInput }
+        copyDict[today] = { completed: false, ts: today, text: this.state.userInput }
         this.setState({ dict: copyDict });
+        this.addTodoToDatabase(this.state.userInput, today, false);
     }
+
+    addTodoToDatabase = (text, ts, completed) => {
+
+        fetch('https://us-central1-foxmike-test.cloudfunctions.net/todoDb/addTodo', {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                completed: completed,
+                ts: ts,
+                text: text,
+            }),
+        });
+    }
+
 
     handleKeyDown = () => {
         if (e.nativeEvent.key == "Enter") {
@@ -71,9 +107,7 @@ export default class App extends Component {
     }
 
     getDate = (timestamp) => {
-
         let momentDate = new moment(new Date(timestamp));
-        // Will display time in 10:30:23 format
         let formattedDate = momentDate.format("dddd D MMMM YYYY");
         return (formattedDate);
     }
@@ -90,10 +124,26 @@ export default class App extends Component {
         let copyDict = this.state.dict;
         if (this.state.dict[key].completed) {
             copyDict[key].completed = false;
+            this.toggleDoneInDatabase(key, false)
         } else {
             copyDict[key].completed = true;
+            this.toggleDoneInDatabase(key, true)
         }
         this.setState({ dict: copyDict });
+    }
+
+    toggleDoneInDatabase = (ts, done) => {
+        fetch('https://us-central1-foxmike-test.cloudfunctions.net/todoDb/toggleDone', {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                ts: ts,
+                completed: done
+            }),
+        });
     }
 
     removeTodo = (key) => {
@@ -102,14 +152,33 @@ export default class App extends Component {
 
         delete copyDict[key];
 
+        this.removeTodoFromDatabase(key);
+
         if (Object.keys(this.state.dict).length === 1) {
             this.setState({ dict: copyDict, userInput: '', addItemExplanationVisible: true });
         } else {
             this.setState({ dict: copyDict, userInput: '' });
         }
+        
+    }
+
+    removeTodoFromDatabase = (ts) => {
+
+        fetch('https://us-central1-foxmike-test.cloudfunctions.net/todoDb/removeTodo', {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                ts: ts,
+            }),
+        });
     }
 
     render() {
+
+
 
         const getAddItemField = this.state.addItemExplanationVisible ? (
             <TouchableNativeFeedback onPress={() => {
@@ -251,18 +320,23 @@ export default class App extends Component {
 
             );
 
-        return (
-            <View style={{ flex: 1 }}>
-                {getPage}
-            </View>);
-
+        if (this.state.isLoading) {
+            return (
+                <View style={{ flex: 1, alignItems:'center', justifyContent: 'center' }}>
+                    <ActivityIndicator/>
+                </View>);
+        } else {
+            return (
+                <View style={{ flex: 1 }}>
+                    {getPage}
+                </View>);
+        }
     }
 
     renderItem = ({ item, index }) => {
 
-        var key = Object.keys(this.state.dict)[index];
+        const text = this.state.dict[item].text
 
-        console.log('item: ' + item + ' index: ' + index + ' from dict: ' + this.state.dict[key].ts);
 
         const getDateHeader = this.checkIfDateHeader(index) && (
             <Text style={{ fontSize: 16, padding: 20, color: 'gray' }}>
@@ -291,7 +365,7 @@ export default class App extends Component {
 
                         <TouchableNativeFeedback onPress={() => this.toggleDone(item)}>
                             <Text style={{ flex: 0.9, width: "100%", backgroundColor: "white", fontSize: 16, padding: 20, textDecorationLine: 'line-through', textDecorationStyle: 'solid' }}>
-                                {item}
+                                {text}
                             </Text>
 
                         </TouchableNativeFeedback>
@@ -326,7 +400,7 @@ export default class App extends Component {
 
                         <TouchableNativeFeedback onPress={() => this.toggleDone(item)}>
                             <Text style={{ flex: 0.9, width: "100%", backgroundColor: "white", fontSize: 16, padding: 20 }}>
-                                {item}
+                                {text}
                             </Text>
 
                         </TouchableNativeFeedback>
