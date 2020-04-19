@@ -9,13 +9,15 @@ const initialState = {
     dict: [],
     data: [],
     addItemExplanationVisible: true,
-    isLoading: false,
+    isLoading: true,
     fabVisible: true
 
 }
 
 const reducer = (state = initialState, action) => {
     switch (action.type) {
+        case 'DATA_AVAILABLE':
+            return Object.assign({}, state, {dict: action.data, isLoading: false})
 
         case 'ADD_TODO':
             const copyDict = Object.assign({},state.dict);

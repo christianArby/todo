@@ -18,28 +18,20 @@ import { Icon } from 'react-native-elements'
 class TodoApp extends Component {
 
 
-    /* componentDidMount() {
+    componentDidMount() {
         fetch('https://us-central1-foxmike-test.cloudfunctions.net/todoDb/getTodo', { method: 'GET' })
             .then((response) => response.json())
             .then((json) => {
                 if (json === null) {
-                    this.setState({ dict: [], isLoading: false });
+                    this.props.dataAvailable([])
                 } else {
-                    this.setState({ dict: json, isLoading: false });
+                    this.props.dataAvailable(json)
                 }
             })
             .catch((error) => console.error(error))
             .finally(() => {
-                this.setState({ isLoading: false });
+                //this.setState({ isLoading: false });
             });
-    } */
-
-    /* addToDo = (newTodo) => {
-        let copyDict = this.props.dict;
-        var today = Math.round((new Date()).getTime());
-        copyDict[today] = { completed: false, ts: today, text: this.props.userInput }
-        this.setState({ dict: copyDict });
-        this.addTodoToDatabase(this.props.userInput, today, false);
     }
 
     addTodoToDatabase = (text, ts, completed) => {
@@ -57,45 +49,6 @@ class TodoApp extends Component {
         });
     }
 
-    toggleDone = (key) => {
-        let copyDict = this.props.dict;
-        if (this.props.dict[key].completed) {
-            copyDict[key].completed = false;
-            this.toggleDoneInDatabase(key, false)
-        } else {
-            copyDict[key].completed = true;
-            this.toggleDoneInDatabase(key, true)
-        }
-        this.setState({ dict: copyDict });
-    }
-
-    toggleDoneInDatabase = (ts, done) => {
-        fetch('https://us-central1-foxmike-test.cloudfunctions.net/todoDb/toggleDone', {
-            method: 'POST',
-            headers: {
-                Accept: 'application/json',
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                ts: ts,
-                completed: done
-            }),
-        });
-    }
-
-    removeTodo = (key) => {
-
-        let copyDict = this.props.dict;
-        delete copyDict[key];
-        this.removeTodoFromDatabase(key);
-        if (Object.keys(this.props.dict).length === 1) {
-            this.setState({ dict: copyDict, userInput: '', addItemExplanationVisible: true });
-        } else {
-            this.setState({ dict: copyDict, userInput: '' });
-        }
-
-    }
-
     removeTodoFromDatabase = (ts) => {
         fetch('https://us-central1-foxmike-test.cloudfunctions.net/todoDb/removeTodo', {
             method: 'POST',
@@ -108,28 +61,6 @@ class TodoApp extends Component {
             }),
         });
     }
-
-    
-
-    
-
-    setFabVisible = (boolean) => {
-        this.setState({ fabVisible: boolean });
-    }
-
-    updateUserInput = (text) => {
-        this.setState({ userInput: text })
-    }
-
-    toggleFab = (boolean) => {
-        this.setState({ fabVisible: boolean })
-    }
-
-    
-
-    setaddItemExplanationVisible = (boolean) => {
-        this.setState({ addItemExplanationVisible: boolean });
-    } */
 
     handleKeyDown = () => {
         if (e.nativeEvent.key == "Enter") {
@@ -179,7 +110,7 @@ class TodoApp extends Component {
                 <View style={{ flex: 1 }}>
                     {Object.keys(this.props.dict).length === 0 ? (
                         // NO TODOS, SHOWING FIRST PAGE
-                        <View style={{ flex: 1, flexDirection: 'column'}} >
+                        <View style={{ flex: 1, flexDirection: 'column' }} >
                             <FirstPage />
                             {this.props.addItemExplanationVisible ? (
                                 // SHOWING BLACK BUTTON
@@ -219,7 +150,9 @@ class TodoApp extends Component {
                                                 ref={input => { this.textInput = input }}
                                                 autoFocus={true}
                                                 onSubmitEditing={() => {
-                                                    this.props.addToDo(Math.round((new Date()).getTime()));
+                                                    let ts = Math.round((new Date()).getTime());
+                                                    this.addTodoToDatabase(this.props.userInput, ts, false)
+                                                    this.props.addToDo(ts);
                                                     this.textInput.clear()
                                                 }}
                                             />
@@ -229,7 +162,9 @@ class TodoApp extends Component {
                                                     type='material'
                                                     color='black'
                                                     onPress={() => {
-                                                        this.props.addToDo(Math.round((new Date()).getTime()));
+                                                        let ts = Math.round((new Date()).getTime());
+                                                        this.addTodoToDatabase(this.props.userInput, ts, false)
+                                                        this.props.addToDo(ts);
                                                         this.textInput.clear()
                                                     }}
                                                 />
@@ -289,7 +224,9 @@ class TodoApp extends Component {
                                                     ref={input => { this.textInput = input }}
                                                     autoFocus={true}
                                                     onSubmitEditing={() => {
-                                                        this.props.addToDo(Math.round((new Date()).getTime()));
+                                                        let ts = Math.round((new Date()).getTime());
+                                                        this.addTodoToDatabase(this.props.userInput, ts, false)
+                                                        this.props.addToDo(ts);
                                                         this.textInput.clear()
                                                         this.props.setFabVisible(true)
                                                     }}
@@ -300,7 +237,9 @@ class TodoApp extends Component {
                                                         type='material'
                                                         color='black'
                                                         onPress={() => {
-                                                            this.props.addToDo(Math.round((new Date()).getTime()));
+                                                            let ts = Math.round((new Date()).getTime());
+                                                            this.addTodoToDatabase(this.props.userInput, ts, false)
+                                                            this.props.addToDo(ts);
                                                             this.textInput.clear();
                                                             this.props.setFabVisible(true)
                                                         }}
@@ -332,9 +271,12 @@ class TodoApp extends Component {
                             name='lens'
                             color='black'
                             size={20}
-                            onPress={() => this.props.removeTodo(item)}>
+                            onPress={() => {
+                                this.props.removeTodo(item)
+                                this.removeTodoFromDatabase(item)
+                            }}>
                         </Icon>
-                        <TouchableNativeFeedback onPress={() => this.props.toggleDone(item)}>
+                        <TouchableNativeFeedback onPress={() => this.props.toggleDone(item, this.props.dict)}>
                             <Text style={{ flex: 0.9, width: "100%", backgroundColor: "white", fontSize: 16, padding: 20, textDecorationLine: 'line-through', textDecorationStyle: 'solid' }}>
                                 {this.props.dict[item].text}
                             </Text>
@@ -343,7 +285,10 @@ class TodoApp extends Component {
                             type='material'
                             name='clear'
                             color='black'
-                            onPress={() => this.props.removeTodo(item)}>
+                            onPress={() => {
+                                this.props.removeTodo(item)
+                                this.removeTodoFromDatabase(item)
+                            }}>
                         </Icon>
                     </View>
                     <View style={{ height: 1, backgroundColor: '#F6F6F6' }}></View>
@@ -360,9 +305,12 @@ class TodoApp extends Component {
                             name='radio-button-unchecked'
                             color='#F6F6F6'
                             size={20}
-                            onPress={() => this.props.removeTodo(item)}>
+                            onPress={() => {
+                                this.props.removeTodo(item)
+                                this.removeTodoFromDatabase(item)
+                            }}>
                         </Icon>
-                        <TouchableNativeFeedback onPress={() => this.props.toggleDone(item)}>
+                        <TouchableNativeFeedback onPress={() => this.props.toggleDone(item, this.props.dict)}>
                             <Text style={{ flex: 0.9, width: "100%", backgroundColor: "white", fontSize: 16, padding: 20 }}>
                                 {this.props.dict[item].text}
                             </Text>
@@ -372,7 +320,10 @@ class TodoApp extends Component {
                             style='material'
                             name='clear'
                             color='black'
-                            onPress={() => this.props.removeTodo(item)}>
+                            onPress={() => {
+                                this.props.removeTodo(item)
+                                this.removeTodoFromDatabase(item)
+                            }}>
                         </Icon>
                     </View>
                     <View style={{ height: 1, backgroundColor: '#F6F6F6' }}></View>
@@ -424,13 +375,39 @@ function mapStateToProps(state) {
 function mapDispatchToProps(dispatch) {
     return {
         addToDo: (ts) => dispatch({ type: 'ADD_TODO', ts }),
-        toggleDone: (key) => dispatch({ type: 'TOGGLE_DONE', key }),
+        toggleDone: (key, dict) => {
+
+            let done = true;
+            if (dict[key].completed) {
+                done = false;
+            }
+            toggleDoneInDatabase(key, done)
+
+            dispatch({ type: 'TOGGLE_DONE', key })
+
+        },
         removeTodo: (key) => dispatch({ type: 'REMOVE_TODO', key }),
         setFabVisible: (boolean) => dispatch({ type: 'SET_FAB_VISIBLE', boolean }),
         updateUserInput: (text) => dispatch({ type: 'UPDATE_USER_INPUT', text }),
         toggleFab: (boolean) => dispatch({ type: 'TOGGLE_FAB', boolean }),
         setaddItemExplanationVisible: (boolean) => dispatch({ type: 'SET_ADD_ITEM_EXPLANATION_VISIBLE', boolean }),
+        dataAvailable: (data) => dispatch({ type: 'DATA_AVAILABLE', data }),
+
     }
+}
+
+function toggleDoneInDatabase (ts, done) {
+    fetch('https://us-central1-foxmike-test.cloudfunctions.net/todoDb/toggleDone', {
+        method: 'POST',
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            ts: ts,
+            completed: done
+        }),
+    });
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(TodoApp)
