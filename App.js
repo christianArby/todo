@@ -1,63 +1,90 @@
 import React, { Component } from 'react';
 
-import { createStore } from 'redux'
-import TodoApp from './src/TodoApp'
+import { createStore, combineReducers } from 'redux'
+
+import { TodoAppComponent } from "./src/TodoApp";
+
+
 import { Provider } from 'react-redux'
 
 const initialState = {
     userInput: '',
     dict: [],
-    data: [],
     addItemExplanationVisible: true,
     isLoading: true,
     fabVisible: true
 
 }
 
-const reducer = (state = initialState, action) => {
+const dictReducer = (dictState = [], action) => {
     switch (action.type) {
         case 'DATA_AVAILABLE':
-            return Object.assign({}, state, {dict: action.data, isLoading: false})
-
+            return action.data
         case 'ADD_TODO':
-            const copyDict = Object.assign({},state.dict);
-            console.log(copyDict)
-            copyDict[action.ts] = { completed: false, ts: action.ts, text: state.userInput }
-            console.log(copyDict)
-            //this.addTodoToDatabase(this.props.userInput, today, false);
-            return Object.assign({}, state, {dict: copyDict})
+            const copyDict = Object.assign({}, dictState);
+            copyDict[action.ts] = { completed: false, ts: action.ts, text: action.text }
+            return copyDict
         case 'TOGGLE_DONE':
-            let copyDict2 = Object.assign({}, state.dict);
+            let copyDict2 = Object.assign({}, dictState);
             if (copyDict2[action.key].completed) {
                 copyDict2[action.key].completed = false;
-                //this.toggleDoneInDatabase(key, false)
             } else {
                 copyDict2[action.key].completed = true;
-                //this.toggleDoneInDatabase(key, true)
             }
-            return Object.assign({}, state, { dict: copyDict2})
+            return copyDict2
         case 'REMOVE_TODO':
-            let copyDict3 = Object.assign({}, state.dict);
+            let copyDict3 = Object.assign({}, dictState);
             delete copyDict3[action.key];
-            //this.removeTodoFromDatabase(key);
-            if (Object.keys(state.dict).length === 1) {
-                return Object.assign({}, state, { dict: copyDict3, userInput: '', addItemExplanationVisible: true })
-            } else {
-                return Object.assign({}, state, { dict: copyDict3, userInput: '' })
-            }
-        case 'SET_FAB_VISIBLE':
-            return Object.assign({}, state, { fabVisible: action.boolean })
-        case 'UPDATE_USER_INPUT':
-            return Object.assign({}, state, {userInput: action.text})
-        case 'TOGGLE_FAB':
-            return Object.assign({}, state, { fabVisible: action.boolean })
-        case 'SET_ADD_ITEM_EXPLANATION_VISIBLE':
-            return Object.assign({}, state, {addItemExplanationVisible: action.boolean})
+            return copyDict3
     }
-    return state
+    return dictState
+}
+
+const loadingReducer = (loadingState = true, action) => {
+    switch (action.type) {
+        case 'IS_LOADING':
+            return false
+    }
+    return loadingState
 
 }
-const store = createStore(reducer)
+
+const toggleFABReducer = (fabState = true, action) => {
+    switch (action.type) {
+        case 'TOGGLE_FAB':
+            return action.boolean
+    }
+    return fabState
+
+}
+
+const itemExplanationReducer = (itemExplanationState = true, action) => {
+    switch (action.type) {
+        case 'SET_ADD_ITEM_EXPLANATION_VISIBLE':
+            return action.boolean
+    }
+    return itemExplanationState
+}
+
+const userInputReducer = (userInputState = '', action) => {
+    switch (action.type) {
+        case 'UPDATE_USER_INPUT':
+            return action.text
+    }
+    return userInputState
+}
+
+function appReducer(state = initialState, action) {
+    return {
+        dict: dictReducer(state.dict, action),
+        userInput: userInputReducer(state.userInput, action),
+        addItemExplanationVisible: itemExplanationReducer(state.addItemExplanationVisible, action),
+        isLoading: loadingReducer(state.isLoading, action),
+        fabVisible: toggleFABReducer(state.fabVisible, action)
+    }
+}
+
+const store = createStore(appReducer)
 
 
 class App extends Component {
@@ -65,7 +92,7 @@ class App extends Component {
     render() {
         return (
             <Provider store={store}>
-                <TodoApp />
+                <TodoAppComponent />
             </Provider>
 
         )
