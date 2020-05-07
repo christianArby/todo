@@ -19,22 +19,7 @@ class TodoApp extends Component {
 
 
     componentDidMount() {
-        fetch('https://us-central1-foxmike-test.cloudfunctions.net/todoDb/getTodo', { method: 'GET' })
-            .then((response) => response.json())
-            .then((json) => {
-                this.props.loading(false)
-                if (json === null) {
-                    this.props.dataAvailable([])
-
-                } else {
-                    this.props.dataAvailable(json)
-
-                }
-            })
-            .catch((error) => console.error(error))
-            .finally(() => {
-                //this.setState({ isLoading: false });
-            });
+        this.fetchData();
     }
 
     handleKeyDown = () => {
@@ -53,11 +38,11 @@ class TodoApp extends Component {
 
     checkIfDateHeader = (index) => {
         if (index > 0) {
-            var key = Object.keys(this.props.dict)[index];
-            var prevKey = Object.keys(this.props.dict)[index - 1];
+            var key = Object.keys(this.props.todos)[index];
+            var prevKey = Object.keys(this.props.todos)[index - 1];
 
-            let moment1 = new moment(new Date(this.props.dict[key].ts));
-            let moment2 = new moment(new Date(this.props.dict[prevKey].ts));
+            let moment1 = new moment(new Date(this.props.todos[key].ts));
+            let moment2 = new moment(new Date(this.props.todos[prevKey].ts));
 
             if (moment1.isSame(moment2, 'day') && moment1.isSame(moment2, 'date')) {
                 return false;
@@ -69,18 +54,108 @@ class TodoApp extends Component {
         }
     }
 
+    fetchData() {
+        fetch('https://us-central1-foxmike-test.cloudfunctions.net/todoDb/getTodo', { method: 'GET' })
+            .then((response) => response.json())
+            .then((json) => {
+                this.props.loading(false);
+                if (json === null) {
+                    this.props.dataAvailable([]);
+                }
+                else {
+                    this.props.dataAvailable(json);
+                }
+            })
+            .catch((error) => console.error(error))
+            .finally(() => {
+            });
+    }
+
     removeTodoActions(item) {
         console.log(item)
-        if (Object.keys(this.props.dict).length === 1) {
-            removeTodoFromDatabase(item);
+        if (Object.keys(this.props.todos).length === 1) {
             this.props.removeTodo(item);
             this.props.setaddItemExplanationVisible(true);
         }
         else {
-            removeTodoFromDatabase(item)
             this.props.removeTodo(item)         
         }
     }
+
+    // LIST ITEM
+    renderItem = ({ item, index }) => {
+        const getDateHeader = this.checkIfDateHeader(index) && (
+            <Text style={{ fontSize: 16, padding: 20, color: 'gray' }}>
+                {this.getDate(this.props.todos[item].ts)}
+            </Text>
+        )
+        if (this.props.todos[item].completed) {
+            // COMPLETED ROW
+            return (
+                <View style={{ flex: 1 }}>
+                    {getDateHeader}
+                    <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
+                        <Icon
+                            type='material'
+                            name='lens'
+                            color='black'
+                            size={20}
+                            onPress={() => {
+                                this.removeTodoActions(item);
+                            }}>
+                        </Icon>
+                        <TouchableNativeFeedback onPress={() => this.props.toggleDone(item, this.props.todos)}>
+                            <Text style={{ flex: 0.9, width: "100%", backgroundColor: "white", fontSize: 16, padding: 20, textDecorationLine: 'line-through', textDecorationStyle: 'solid' }}>
+                                {this.props.todos[item].text}
+                            </Text>
+                        </TouchableNativeFeedback>
+                        <Icon
+                            type='material'
+                            name='clear'
+                            color='black'
+                            onPress={() => {
+                                this.removeTodoActions(item);
+                            }}>
+                        </Icon>
+                    </View>
+                    <View style={{ height: 1, backgroundColor: '#F6F6F6' }}></View>
+                </View>
+            );
+        } else {
+            // UNCOMPLETED ROW
+            return (
+                <View style={{ flex: 1 }}>
+                    {getDateHeader}
+                    <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
+                        <Icon
+                            type='material'
+                            name='radio-button-unchecked'
+                            color='#F6F6F6'
+                            size={20}
+                            onPress={() => {
+                                this.removeTodoActions(item);
+                            }}>
+                        </Icon>
+                        <TouchableNativeFeedback onPress={() => this.props.toggleDone(item, this.props.todos)}>
+                            <Text style={{ flex: 0.9, width: "100%", backgroundColor: "white", fontSize: 16, padding: 20 }}>
+                                {this.props.todos[item].text}
+                            </Text>
+
+                        </TouchableNativeFeedback>
+                        <Icon
+                            style='material'
+                            name='clear'
+                            color='black'
+                            onPress={() => {
+                                this.removeTodoActions(item);
+                            }}>
+                        </Icon>
+                    </View>
+                    <View style={{ height: 1, backgroundColor: '#F6F6F6' }}></View>
+                </View>
+            );
+        }
+    };
 
     render() {
         if (this.props.isLoading) {
@@ -91,12 +166,9 @@ class TodoApp extends Component {
                 </View>);
         } else {
             return (
-
                 <View style={{ flex: 1 }}>
-                    {console.log('Rendering due to dict')}
-                    {Object.keys(this.props.dict).length === 0 ? (
-
-
+                    {console.log('Rendering due to todos')}
+                    {Object.keys(this.props.todos).length === 0 ? (
                         // NO TODOS, SHOWING FIRST PAGE
                         <View style={{ flex: 1, flexDirection: 'column' }} >
                             {console.log('Rendering first page')}
@@ -136,14 +208,13 @@ class TodoApp extends Component {
                                     <View style={{ flex: 1, position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center' }}>
                                         <AddTextComponent />
                                     </View>
-
                                 )}
 
                         </View>
                     ) : (
                             // TODOS ADDED, SHOWING SECOND PAGE WITH LIST
                             <View style={{ flex: 1 }} >
-                                {console.log('Rendering due to dict')}
+                                {console.log('Rendering due to todos')}
                                 <View style={{ alignItems: 'center', justifyContent: 'center', backgroundColor: 'white', height: 90 }}>
                                     <TodoLogo />
                                 </View>
@@ -151,7 +222,7 @@ class TodoApp extends Component {
                                 <View style={{ flex: 1, paddingStart: 16, paddingEnd: 16, paddingTop: 26, backgroundColor: 'white' }}>
                                     <FlatList style={{ flex: 1 }}
                                         renderItem={this.renderItem}
-                                        data={_.keys(this.props.dict)}
+                                        data={_.keys(this.props.todos)}
                                         keyExtractor={item => `${item}`}
                                     />
                                 </View>
@@ -192,80 +263,6 @@ class TodoApp extends Component {
                 </View>);
         }
     }
-    // LIST ITEM
-    renderItem = ({ item, index }) => {
-        const getDateHeader = this.checkIfDateHeader(index) && (
-            <Text style={{ fontSize: 16, padding: 20, color: 'gray' }}>
-                {this.getDate(this.props.dict[item].ts)}
-            </Text>
-        )
-        if (this.props.dict[item].completed) {
-            // COMPLETED ROW
-            return (
-                <View style={{ flex: 1 }}>
-                    {getDateHeader}
-                    <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
-                        <Icon
-                            type='material'
-                            name='lens'
-                            color='black'
-                            size={20}
-                            onPress={() => {
-                                this.removeTodoActions(item);
-                            }}>
-                        </Icon>
-                        <TouchableNativeFeedback onPress={() => this.props.toggleDone(item, this.props.dict)}>
-                            <Text style={{ flex: 0.9, width: "100%", backgroundColor: "white", fontSize: 16, padding: 20, textDecorationLine: 'line-through', textDecorationStyle: 'solid' }}>
-                                {this.props.dict[item].text}
-                            </Text>
-                        </TouchableNativeFeedback>
-                        <Icon
-                            type='material'
-                            name='clear'
-                            color='black'
-                            onPress={() => {
-                                this.removeTodoActions(item);
-                            }}>
-                        </Icon>
-                    </View>
-                    <View style={{ height: 1, backgroundColor: '#F6F6F6' }}></View>
-                </View>
-            );
-        } else {
-            // UNCOMPLETED ROW
-            return (
-                <View style={{ flex: 1 }}>
-                    {getDateHeader}
-                    <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
-                        <Icon
-                            type='material'
-                            name='radio-button-unchecked'
-                            color='#F6F6F6'
-                            size={20}
-                            onPress={() => {
-                                this.removeTodoActions(item);
-                            }}>
-                        </Icon>
-                        <TouchableNativeFeedback onPress={() => this.props.toggleDone(item, this.props.dict)}>
-                            <Text style={{ flex: 0.9, width: "100%", backgroundColor: "white", fontSize: 16, padding: 20 }}>
-                                {this.props.dict[item].text}
-                            </Text>
-
-                        </TouchableNativeFeedback>
-                        <Icon
-                            style='material'
-                            name='clear'
-                            color='black'
-                            onPress={() => {
-                                this.removeTodoActions(item);
-                            }}>
-                        </Icon>
-                    </View>
-                    <View style={{ height: 1, backgroundColor: '#F6F6F6' }}></View>
-                </View>
-            );
-        }
-    };
 }
 
 function FirstPage() {
@@ -300,7 +297,7 @@ function TodoLogo() {
 function mapStateToProps(state) {
     return {
         userInput: state.userInput,
-        dict: state.dict,
+        todos: state.todos,
         addItemExplanationVisible: state.addItemExplanationVisible,
         isLoading: state.isLoading,
         fabVisible: state.fabVisible
@@ -310,11 +307,16 @@ function mapStateToProps(state) {
 function mapDispatchToProps(dispatch) {
     return {
         loading: (boolean) => dispatch({ type: 'IS_LOADING', boolean }),
-        addToDo: (ts, text) => dispatch({ type: 'ADD_TODO', ts, text }),
-        toggleDone: (key, dict) => {
+        addToDo: (text) => {
+            let ts = Math.round((new Date()).getTime());
+            addTodoToDatabase(text, ts, false)
+            dispatch({ type: 'ADD_TODO', ts, text })
+
+        },
+        toggleDone: (key, todos) => {
 
             let done = true;
-            if (dict[key].completed) {
+            if (todos[key].completed) {
                 done = false;
             }
             toggleDoneInDatabase(key, done)
@@ -322,9 +324,11 @@ function mapDispatchToProps(dispatch) {
             dispatch({ type: 'TOGGLE_DONE', key })
 
         },
-        removeTodo: (key, dictLength) => {
+        removeTodo: (key, todosLength) => {
 
-            if (dictLength === 1) {
+            removeTodoFromDatabase(key);
+
+            if (todosLength === 1) {
                 dispatch({ type: 'REMOVE_TODO', key })
                 //setaddItemExplanationVisible(true)
             } else {
@@ -338,7 +342,6 @@ function mapDispatchToProps(dispatch) {
         toggleFab: (boolean) => dispatch({ type: 'TOGGLE_FAB', boolean }),
         setaddItemExplanationVisible: (boolean) => dispatch({ type: 'SET_ADD_ITEM_EXPLANATION_VISIBLE', boolean }),
         dataAvailable: (data) => dispatch({ type: 'DATA_AVAILABLE', data }),
-
     }
 }
 
@@ -397,9 +400,7 @@ class AddText extends React.Component {
                     ref={input => { this.textInput = input }}
                     autoFocus={true}
                     onSubmitEditing={() => {
-                        let ts = Math.round((new Date()).getTime());
-                        addTodoToDatabase(this.state.todoInput, ts, false)
-                        this.props.addToDo(ts, this.state.todoInput)
+                        this.props.addToDo(this.state.todoInput)
                         this.textInput.clear()
                         this.props.toggleFab(true)
                     }}
@@ -410,9 +411,7 @@ class AddText extends React.Component {
                         type='material'
                         color='black'
                         onPress={() => {
-                            let ts = Math.round((new Date()).getTime());
-                            addTodoToDatabase(this.state.todoInput, ts, false)
-                            this.props.addToDo(ts, this.state.todoInput)
+                            this.props.addToDo(this.state.todoInput)
                             this.textInput.clear()
                             this.props.toggleFab(true)
                         }}

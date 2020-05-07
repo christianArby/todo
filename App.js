@@ -9,35 +9,35 @@ import { Provider } from 'react-redux'
 
 const initialState = {
     userInput: '',
-    dict: [],
+    todos: [],
     addItemExplanationVisible: true,
     isLoading: true,
     fabVisible: true
 
 }
 
-const dictReducer = (dictState = [], action) => {
+const todosReducer = (todosState = [], action) => {
     switch (action.type) {
         case 'DATA_AVAILABLE':
             return action.data
         case 'ADD_TODO':
-            const copyDict = Object.assign({}, dictState);
-            copyDict[action.ts] = { completed: false, ts: action.ts, text: action.text }
-            return copyDict
+            const copyTodos = Object.assign({}, todosState);
+            copyTodos[action.ts] = { completed: false, ts: action.ts, text: action.text }
+            return copyTodos
         case 'TOGGLE_DONE':
-            let copyDict2 = Object.assign({}, dictState);
-            if (copyDict2[action.key].completed) {
-                copyDict2[action.key].completed = false;
+            let copyTodos2 = Object.assign({}, todosState);
+            if (copyTodos2[action.key].completed) {
+                copyTodos2[action.key].completed = false;
             } else {
-                copyDict2[action.key].completed = true;
+                copyTodos2[action.key].completed = true;
             }
-            return copyDict2
+            return copyTodos2
         case 'REMOVE_TODO':
-            let copyDict3 = Object.assign({}, dictState);
-            delete copyDict3[action.key];
-            return copyDict3
+            let copyTodos3 = Object.assign({}, todosState);
+            delete copyTodos3[action.key];
+            return copyTodos3
     }
-    return dictState
+    return todosState
 }
 
 const loadingReducer = (loadingState = true, action) => {
@@ -76,7 +76,7 @@ const userInputReducer = (userInputState = '', action) => {
 
 function appReducer(state = initialState, action) {
     return {
-        dict: dictReducer(state.dict, action),
+        todos: todosReducer(state.todos, action),
         userInput: userInputReducer(state.userInput, action),
         addItemExplanationVisible: itemExplanationReducer(state.addItemExplanationVisible, action),
         isLoading: loadingReducer(state.isLoading, action),
