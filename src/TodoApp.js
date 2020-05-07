@@ -72,7 +72,6 @@ class TodoApp extends Component {
     }
 
     removeTodoActions(item) {
-        console.log(item)
         if (Object.keys(this.props.todos).length === 1) {
             this.props.removeTodo(item);
             this.props.setaddItemExplanationVisible(true);
@@ -159,7 +158,6 @@ class TodoApp extends Component {
 
     render() {
         if (this.props.isLoading) {
-            console.log('Rendering due to isloading')
             return (
                 <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
                     <ActivityIndicator />
@@ -167,11 +165,9 @@ class TodoApp extends Component {
         } else {
             return (
                 <View style={{ flex: 1 }}>
-                    {console.log('Rendering due to todos')}
                     {Object.keys(this.props.todos).length === 0 ? (
                         // NO TODOS, SHOWING FIRST PAGE
                         <View style={{ flex: 1, flexDirection: 'column' }} >
-                            {console.log('Rendering first page')}
 
                             <FirstPage />
                             {this.props.addItemExplanationVisible ? (
@@ -214,7 +210,7 @@ class TodoApp extends Component {
                     ) : (
                             // TODOS ADDED, SHOWING SECOND PAGE WITH LIST
                             <View style={{ flex: 1 }} >
-                                {console.log('Rendering due to todos')}
+
                                 <View style={{ alignItems: 'center', justifyContent: 'center', backgroundColor: 'white', height: 90 }}>
                                     <TodoLogo />
                                 </View>
